@@ -3,10 +3,165 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: batch.carbonaware.dev
+  name: carbonawarejobs.batch.carbonaware.dev
 spec:
-  group: carbonaware.dev
-  version: v1alpha1
+  group: batch.carbonaware.dev
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              maxDelay:
+                type: string
+                description: "Maximum amount of time to delay a job's execution by (e.g., '30m', '2h')"
+                pattern: '^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$'
+              jobExecutionDuration:
+                type: string
+                description: "Amount of time a job is expected to take to run (e.g., '10m', '1h')"
+                pattern: '^([0-9]+(\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$'
+              jobTemplate:
+                description: "Full Kubernetes Job template"
+                x-kubernetes-preserve-unknown-fields: true
+                type: object
+            required:
+            - maxDelay
+            - jobExecutionDuration
+            - jobTemplate
+          status:
+            type: object
+            properties:
+              conditions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    status:
+                      type: string
+                    lastTransitionTime:
+                      type: string
+                      format: date-time
+                    reason:
+                      type: string
+                    message:
+                      type: string
+              phase:
+                type: string
+                enum: ["Pending", "Scheduled", "Running", "Succeeded", "Failed"]
+              scheduledTime:
+                type: string
+                format: date-time
+                description: "The time when the job was scheduled to run"
+              executedTime:
+                type: string
+                format: date-time
+                description: "The time when the job actually started execution"
+              completionTime:
+                type: string
+                format: date-time
+                description: "The time when the job completed"
+              carbonIntensity:
+                type: object
+                description: "Carbon intensity information from the carbon-aware scheduler"
+                properties:
+                  ideal:
+                    type: object
+                    properties:
+                      time:
+                        type: string
+                        format: date-time
+                      zone:
+                        type: object
+                        properties:
+                          provider:
+                            type: string
+                          region:
+                            type: string
+                      co2_intensity:
+                        type: number
+                  options:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        time:
+                          type: string
+                          format: date-time
+                        zone:
+                          type: object
+                          properties:
+                            provider:
+                              type: string
+                            region:
+                              type: string
+                        co2_intensity:
+                          type: number
+                  worst_case:
+                    type: object
+                    properties:
+                      time:
+                        type: string
+                        format: date-time
+                      zone:
+                        type: object
+                        properties:
+                          provider:
+                            type: string
+                          region:
+                            type: string
+                      co2_intensity:
+                        type: number
+                  naive_case:
+                    type: object
+                    properties:
+                      time:
+                        type: string
+                        format: date-time
+                      zone:
+                        type: object
+                        properties:
+                          provider:
+                            type: string
+                          region:
+                            type: string
+                      co2_intensity:
+                        type: number
+                  median_case:
+                    type: object
+                    properties:
+                      time:
+                        type: string
+                        format: date-time
+                      zone:
+                        type: object
+                        properties:
+                          provider:
+                            type: string
+                          region:
+                            type: string
+                      co2_intensity:
+                        type: number
+                  carbon_savings:
+                    type: object
+                    properties:
+                      vs_worst_case:
+                        type: number
+                      vs_naive_case:
+                        type: number
+                      vs_median_case:
+                        type: number
+              delayApplied:
+                type: string
+                description: "Actual delay applied to the job execution"
+        required:
+        - spec
   scope: Namespaced
   names:
     plural: carbonawarejobs

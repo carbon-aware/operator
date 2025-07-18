@@ -1,0 +1,47 @@
+apiVersion: batch.carbonaware.dev/v1alpha1
+kind: CarbonAwareJob
+metadata:
+  name: batch-data-processing
+  namespace: default
+  labels:
+    app: batch-processor
+    environment: production
+spec:
+  maxDelay: "2h"
+  jobExecutionDuration: "45m"
+  jobTemplate:
+    metadata:
+      labels:
+        app: batch-processor
+        carbon-aware: "true"
+    spec:
+      template:
+        metadata:
+          labels:
+            app: batch-processor
+        spec:
+          containers:
+          - name: data-processor
+            image: python:3.11-slim
+            command: ["python"]
+            args: ["-c", "import time; print('Processing data...'); time.sleep(2700); print('Processing complete')"]
+            env:
+            - name: BATCH_SIZE
+              value: "1000"
+            - name: OUTPUT_FORMAT
+              value: "parquet"
+            resources:
+              requests:
+                memory: "512Mi"
+                cpu: "1000m"
+              limits:
+                memory: "2Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: data-volume
+              mountPath: /data
+              readOnly: false
+          volumes:
+          - name: data-volume
+            emptyDir: {}
+          restartPolicy: Never
