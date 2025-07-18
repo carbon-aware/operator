@@ -1,0 +1,9 @@
+[project]
+name = "carbonaware-kube-operator"
+version = "0.1.0"
+description = "CarbonAware Kubernetes Operator, implements CarbonAware scheduling for workloads to minimize carbon intensity."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "kopf[uvloop]>=1.38.0",
+]
