@@ -1,0 +1,55 @@
+apiVersion: batch.carbonaware.dev/v1alpha1
+kind: CarbonAwareJob
+metadata:
+  name: ml-model-training
+  namespace: ml-workloads
+  annotations:
+    carbon-aware.dev/priority: "low"
+    carbon-aware.dev/category: "ml-training"
+spec:
+  maxDelay: "4h"
+  jobExecutionDuration: "2h30m"
+  jobTemplate:
+    metadata:
+      labels:
+        workload-type: ml-training
+        carbon-priority: flexible
+      annotations:
+        ml-framework: pytorch
+    spec:
+      template:
+        spec:
+          containers:
+          - name: pytorch-trainer
+            image: pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
+            command: ["python"]
+            args: ["/app/train.py", "--epochs", "100", "--batch-size", "32"]
+            env:
+            - name: CUDA_VISIBLE_DEVICES
+              value: "0"
+            - name: PYTORCH_CUDA_ALLOC_CONF
+              value: "max_split_size_mb:512"
+            resources:
+              requests:
+                memory: "8Gi"
+                cpu: "4000m"
+                nvidia.com/gpu: "1"
+              limits:
+                memory: "16Gi"
+                cpu: "8000m"
+                nvidia.com/gpu: "1"
+            volumeMounts:
+            - name: model-data
+              mountPath: /app/data
+              readOnly: true
+            - name: model-output
+              mountPath: /app/output
+              readOnly: false
+          volumes:
+          - name: model-data
+            persistentVolumeClaim:
+              claimName: training-data-pvc
+          - name: model-output
+            persistentVolumeClaim:
+              claimName: model-output-pvc
+          restartPolicy: Never
